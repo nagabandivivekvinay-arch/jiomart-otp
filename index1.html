@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>JioMart Delivery OTP</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f3f6ff;
+text-align:center;
+margin:0;
+padding:20px;
+}
+
+h1{
+color:#1a237e;
+}
+
+.container{
+background:white;
+padding:25px;
+border-radius:10px;
+max-width:450px;
+margin:auto;
+box-shadow:0 4px 10px rgba(0,0,0,0.15);
+}
+
+input{
+width:90%;
+padding:12px;
+margin:8px;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:16px;
+}
+
+button{
+background:#2962ff;
+color:white;
+border:none;
+padding:10px 25px;
+border-radius:6px;
+cursor:pointer;
+font-size:16px;
+}
+
+button:hover{
+background:#0039cb;
+}
+
+.delete{
+background:red;
+}
+
+table{
+width:95%;
+margin:auto;
+margin-top:30px;
+border-collapse:collapse;
+background:white;
+box-shadow:0 3px 10px rgba(0,0,0,0.15);
+}
+
+th{
+background:#0d47a1;
+color:white;
+padding:12px;
+}
+
+td{
+padding:10px;
+border-bottom:1px solid #ddd;
+}
+
+.paid{
+color:green;
+font-weight:bold;
+}
+
+.pending{
+color:red;
+font-weight:bold;
+}
+
+.hidden{
+display:none;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>JioMart Delivery OTP</h1>
+
+<div class="container">
+
+<input id="adminPass" placeholder="Admin Password">
+
+<br>
+
+<button onclick="loginAdmin()">Admin Login</button>
+
+<div id="adminPanel" class="hidden">
+
+<input id="name" placeholder="Delivery Person Name">
+
+<input id="otp" placeholder="OTP">
+
+<br>
+
+<label>
+<input type="checkbox" id="payment"> Payment Done
+</label>
+
+<br><br>
+
+<button onclick="addOTP()">Submit OTP</button>
+
+</div>
+
+</div>
+
+<h2>Recent OTP</h2>
+
+<table>
+
+<thead>
+
+<tr>
+<th>Delivery Person</th>
+<th>OTP</th>
+<th>Payment</th>
+<th>Date & Time</th>
+<th id="actionHead" class="hidden">Action</th>
+</tr>
+
+</thead>
+
+<tbody id="table"></tbody>
+
+</table>
+
+
+<script>
+
+const ADMIN_PASSWORD="1122"; // change this
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBRTE1x8G_aLqW2tn6Y5BPD1vBdsMlWWV8",
+  authDomain: "jiomart-otp.firebaseapp.com",
+  databaseURL: "https://jiomart-otp-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "jiomart-otp",
+  storageBucket: "jiomart-otp.firebasestorage.app",
+  messagingSenderId: "673199354644",
+  appId: "1:673199354644:web:572645d6b479d239b90801",
+  measurementId: "G-89PS03TQ0Y"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db=firebase.database().ref("otp");
+
+let isAdmin=false;
+
+function loginAdmin(){
+
+let pass=document.getElementById("adminPass").value;
+
+if(pass===ADMIN_PASSWORD){
+
+isAdmin=true;
+
+document.getElementById("adminPanel").classList.remove("hidden");
+
+document.getElementById("actionHead").classList.remove("hidden");
+
+alert("Admin mode enabled");
+
+}else{
+
+alert("Wrong password");
+
+}
+
+}
+
+
+function addOTP(){
+
+if(!isAdmin){
+alert("Admin only");
+return;
+}
+
+let name=document.getElementById("name").value;
+let otp=document.getElementById("otp").value;
+
+let payment=document.getElementById("payment").checked ? "Paid":"Pending";
+
+let time=new Date().toLocaleString();
+
+db.push({
+
+name:name,
+otp:otp,
+payment:payment,
+time:time,
+timestamp:Date.now()
+
+});
+
+document.getElementById("name").value="";
+document.getElementById("otp").value="";
+document.getElementById("payment").checked=false;
+
+}
+
+
+function deleteData(id){
+
+if(!isAdmin){
+alert("Admin only");
+return;
+}
+
+firebase.database().ref("otp/"+id).remove();
+
+}
+
+
+db.orderByChild("timestamp").on("value",function(snapshot){
+
+let data=snapshot.val();
+
+let arr=[];
+
+for(let id in data){
+
+arr.push({id:id,...data[id]});
+
+}
+
+arr.reverse();
+
+let html="";
+
+arr.forEach(d=>{
+
+let payClass=d.payment=="Paid"?"paid":"pending";
+
+html+=`
+
+<tr>
+
+<td>${d.name}</td>
+
+<td>${d.otp}</td>
+
+<td class="${payClass}">${d.payment}</td>
+
+<td>${d.time}</td>
+
+${isAdmin ? `<td><button class="delete" onclick="deleteData('${d.id}')">Delete</button></td>` : ``}
+
+</tr>
+
+`;
+
+});
+
+document.getElementById("table").innerHTML=html;
+
+});
+
+</script>
+
+</body>
+</html>
