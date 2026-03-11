@@ -42,13 +42,17 @@ button{
 background:linear-gradient(135deg,#667eea,#764ba2);
 color:white;
 border:none;
-padding:10px 22px;
-border-radius:25px;
+padding:8px 16px;
+border-radius:20px;
 cursor:pointer;
 }
 
 .deleteBtn{
 background:#ff4b2b;
+}
+
+.editBtn{
+background:#28a745;
 }
 
 table{
@@ -91,10 +95,6 @@ margin-right:auto;
 font-weight:bold;
 }
 
-.searchBox{
-margin-top:15px;
-}
-
 .hidden{
 display:none;
 }
@@ -110,27 +110,23 @@ display:none;
 <div class="container">
 
 <input id="adminPass" placeholder="Admin Password">
-
 <button onclick="loginAdmin()">Admin Login</button>
 
 <div id="adminPanel" class="hidden">
 
 <input id="name" placeholder="Delivery Person Name">
 
-<input id="otp" maxlength="4"
-oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4); autoSubmit();">
+<input id="otp" placeholder="Enter OTP" maxlength="4"
+oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
 
-<input id="amount" placeholder="Order Amount">
-
-<button onclick="addOTP()">Submit OTP</button>
-
-</div>
+<input id="amount" placeholder="Enter Amount" maxlength="3"
+oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3); autoSubmit();">
 
 </div>
 
-<div class="searchBox">
+</div>
+
 <input id="search" placeholder="Search delivery person..." onkeyup="filterTable()">
-</div>
 
 <table>
 
@@ -197,21 +193,21 @@ alert("Wrong Password");
 }
 
 function autoSubmit(){
+
 let otp=document.getElementById("otp").value;
-if(otp.length===4){
+let amount=document.getElementById("amount").value;
+
+if(otp.length===4 && amount.length===3){
 addOTP();
 }
+
 }
 
 function addOTP(){
 
-if(!isAdmin) return;
-
 let name=document.getElementById("name").value;
 let otp=document.getElementById("otp").value;
 let amount=parseFloat(document.getElementById("amount").value||0);
-
-if(!/^\d{4}$/.test(otp)) return;
 
 let time=new Date().toLocaleString();
 
@@ -232,8 +228,6 @@ document.getElementById("amount").value="";
 
 function togglePayment(id,current){
 
-if(!isAdmin) return;
-
 firebase.database().ref("otp/"+id).update({
 payment:!current
 });
@@ -242,17 +236,24 @@ payment:!current
 
 function deleteData(id){
 
-if(!isAdmin) return;
-
 if(confirm("Delete this order?")){
 firebase.database().ref("otp/"+id).remove();
 }
 
 }
 
-function copyOTP(val){
-navigator.clipboard.writeText(val);
-alert("OTP copied");
+function editData(id,name,otp,amount){
+
+let newName=prompt("Edit Name",name);
+let newOTP=prompt("Edit OTP",otp);
+let newAmount=prompt("Edit Amount",amount);
+
+firebase.database().ref("otp/"+id).update({
+name:newName,
+otp:newOTP,
+amount:newAmount
+});
+
 }
 
 function filterTable(){
@@ -298,14 +299,17 @@ if(index===0) rowClass+=" latest";
 html+=`
 <tr class="${rowClass}">
 <td>${d.name}</td>
-<td>${d.otp} <button onclick="copyOTP('${d.otp}')">Copy</button></td>
+<td>${d.otp}</td>
 <td>
 <input type="checkbox" ${d.payment?'checked':''}
 onclick="togglePayment('${d.id}',${d.payment})">
 </td>
 <td>₹ ${d.amount}</td>
 <td>${d.time}</td>
-${isAdmin?`<td><button class="deleteBtn" onclick="deleteData('${d.id}')">Delete</button></td>`:""}
+<td>
+<button class="editBtn" onclick="editData('${d.id}','${d.name}','${d.otp}','${d.amount}')">Edit</button>
+<button class="deleteBtn" onclick="deleteData('${d.id}')">Delete</button>
+</td>
 </tr>
 `;
 
