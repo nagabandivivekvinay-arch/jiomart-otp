@@ -20,10 +20,6 @@ text-align:center;
 color:white;
 }
 
-h1{
-margin-bottom:20px;
-}
-
 .container{
 background:white;
 padding:25px;
@@ -36,78 +32,67 @@ color:#333;
 
 input{
 width:90%;
-padding:12px;
-margin:8px;
+padding:10px;
+margin:6px;
 border-radius:6px;
 border:1px solid #ccc;
-font-size:16px;
-}
-
-#otp{
-text-align:center;
-font-size:18px;
 }
 
 button{
 background:linear-gradient(135deg,#667eea,#764ba2);
 color:white;
 border:none;
-padding:12px 28px;
-border-radius:30px;
-font-size:16px;
+padding:10px 22px;
+border-radius:25px;
 cursor:pointer;
-margin-top:10px;
-transition:0.3s;
-box-shadow:0 4px 10px rgba(0,0,0,0.2);
-}
-
-button:hover{
-transform:scale(1.05);
-box-shadow:0 6px 15px rgba(0,0,0,0.3);
 }
 
 .deleteBtn{
-background:linear-gradient(135deg,#ff416c,#ff4b2b);
+background:#ff4b2b;
 }
 
 table{
 width:95%;
 margin:auto;
-margin-top:30px;
+margin-top:20px;
 border-collapse:collapse;
 background:white;
-box-shadow:0 4px 10px rgba(0,0,0,0.2);
-border-radius:8px;
-overflow:hidden;
-color:#333;
+color:black;
 }
 
 th{
 background:#1a237e;
 color:white;
-padding:12px;
+padding:10px;
 }
 
 td{
-padding:10px;
-border-bottom:1px solid #eee;
+padding:8px;
+border-bottom:1px solid #ddd;
 }
 
-tr:hover{
-background:#f1f1f1;
+.pendingRow{
+background:#ffe5e5;
 }
 
-.totalBox{
+.latest{
+background:#fff9c4;
+}
+
+.summary{
 background:white;
 color:black;
-margin-top:20px;
-padding:15px;
-font-size:20px;
-font-weight:bold;
+padding:12px;
+margin-top:15px;
 border-radius:8px;
-width:300px;
+width:320px;
 margin-left:auto;
 margin-right:auto;
+font-weight:bold;
+}
+
+.searchBox{
+margin-top:15px;
 }
 
 .hidden{
@@ -132,14 +117,10 @@ display:none;
 
 <input id="name" placeholder="Delivery Person Name">
 
-<input id="otp"
-type="text"
-maxlength="4"
-oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
+<input id="otp" maxlength="4"
+oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4); autoSubmit();">
 
 <input id="amount" placeholder="Order Amount">
-
-<br>
 
 <button onclick="addOTP()">Submit OTP</button>
 
@@ -147,17 +128,19 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
 
 </div>
 
-<h2>Recent OTP</h2>
+<div class="searchBox">
+<input id="search" placeholder="Search delivery person..." onkeyup="filterTable()">
+</div>
 
 <table>
 
 <thead>
 <tr>
-<th>Delivery Person</th>
+<th>Name</th>
 <th>OTP</th>
 <th>Payment</th>
 <th>Amount</th>
-<th>Date & Time</th>
+<th>Time</th>
 <th id="actionHead" class="hidden">Action</th>
 </tr>
 </thead>
@@ -166,22 +149,24 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,4)">
 
 </table>
 
-<div class="totalBox">
-Total Amount: ₹ <span id="totalAmount">0</span>
+<div class="summary">
+Total Orders: <span id="totalOrders">0</span><br>
+Total Paid: ₹ <span id="totalPaid">0</span><br>
+Total Pending: ₹ <span id="totalPending">0</span>
 </div>
 
 <script>
 
 const ADMIN_PASSWORD="1122";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBRTE1x8G_aLqW2tn6Y5BPD1vBdsMlWWV8",
-  authDomain: "jiomart-otp.firebaseapp.com",
-  databaseURL: "https://jiomart-otp-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "jiomart-otp",
-  storageBucket: "jiomart-otp.firebasestorage.app",
-  messagingSenderId: "673199354644",
-  appId: "1:673199354644:web:572645d6b479d239b90801"
+const firebaseConfig={
+apiKey:"AIzaSyBRTE1x8G_aLqW2tn6Y5BPD1vBdsMlWWV8",
+authDomain:"jiomart-otp.firebaseapp.com",
+databaseURL:"https://jiomart-otp-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"jiomart-otp",
+storageBucket:"jiomart-otp.firebasestorage.app",
+messagingSenderId:"673199354644",
+appId:"1:673199354644:web:572645d6b479d239b90801"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -211,28 +196,29 @@ alert("Wrong Password");
 
 }
 
+function autoSubmit(){
+let otp=document.getElementById("otp").value;
+if(otp.length===4){
+addOTP();
+}
+}
+
 function addOTP(){
 
-if(!isAdmin){
-alert("Admin Only");
-return;
-}
+if(!isAdmin) return;
 
 let name=document.getElementById("name").value;
 let otp=document.getElementById("otp").value;
-let amount=document.getElementById("amount").value;
+let amount=parseFloat(document.getElementById("amount").value||0);
 
-if(!/^\d{4}$/.test(otp)){
-alert("OTP must be exactly 4 digits");
-return;
-}
+if(!/^\d{4}$/.test(otp)) return;
 
 let time=new Date().toLocaleString();
 
 db.push({
 name:name,
 otp:otp,
-amount:parseFloat(amount),
+amount:amount,
 payment:false,
 time:time,
 timestamp:Date.now()
@@ -258,7 +244,25 @@ function deleteData(id){
 
 if(!isAdmin) return;
 
+if(confirm("Delete this order?")){
 firebase.database().ref("otp/"+id).remove();
+}
+
+}
+
+function copyOTP(val){
+navigator.clipboard.writeText(val);
+alert("OTP copied");
+}
+
+function filterTable(){
+
+let value=document.getElementById("search").value.toLowerCase();
+let rows=document.querySelectorAll("#table tr");
+
+rows.forEach(row=>{
+row.style.display=row.innerText.toLowerCase().includes(value)?"":"none";
+});
 
 }
 
@@ -266,7 +270,9 @@ db.orderByChild("timestamp").on("value",function(snapshot){
 
 let data=snapshot.val();
 let arr=[];
-let total=0;
+let totalOrders=0;
+let totalPaid=0;
+let totalPending=0;
 
 for(let id in data){
 arr.push({id:id,...data[id]});
@@ -276,28 +282,40 @@ arr.reverse();
 
 let html="";
 
-arr.forEach(d=>{
+arr.forEach((d,index)=>{
 
-total+=Number(d.amount||0);
+totalOrders++;
+
+if(d.payment){
+totalPaid+=Number(d.amount);
+}else{
+totalPending+=Number(d.amount);
+}
+
+let rowClass=d.payment?"":"pendingRow";
+if(index===0) rowClass+=" latest";
 
 html+=`
-<tr>
+<tr class="${rowClass}">
 <td>${d.name}</td>
-<td>${d.otp}</td>
+<td>${d.otp} <button onclick="copyOTP('${d.otp}')">Copy</button></td>
 <td>
 <input type="checkbox" ${d.payment?'checked':''}
 onclick="togglePayment('${d.id}',${d.payment})">
 </td>
-<td>₹ ${d.amount||0}</td>
+<td>₹ ${d.amount}</td>
 <td>${d.time}</td>
-${isAdmin ? `<td><button class="deleteBtn" onclick="deleteData('${d.id}')">Delete</button></td>` : ``}
+${isAdmin?`<td><button class="deleteBtn" onclick="deleteData('${d.id}')">Delete</button></td>`:""}
 </tr>
 `;
 
 });
 
 document.getElementById("table").innerHTML=html;
-document.getElementById("totalAmount").innerText=total;
+
+document.getElementById("totalOrders").innerText=totalOrders;
+document.getElementById("totalPaid").innerText=totalPaid;
+document.getElementById("totalPending").innerText=totalPending;
 
 });
 
