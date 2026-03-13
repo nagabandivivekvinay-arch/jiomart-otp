@@ -147,6 +147,7 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3); autoSubmit();">
 <th>OTP</th>
 <th>Payment</th>
 <th>Amount</th>
+<th>Delivered</th>
 <th>Time</th>
 <th id="actionHead" class="hidden">Action</th>
 </tr>
@@ -231,6 +232,7 @@ name:name,
 otp:otp,
 amount:amount,
 payment:false,
+delivered:false,
 time:time,
 date:date,
 timestamp:Date.now()
@@ -247,21 +249,15 @@ currentFilter=type;
 loadData();
 }
 
-function isToday(date){
-let today=new Date().toISOString().split('T')[0];
-return date===today;
-}
-
-function isYesterday(date){
-let d=new Date();
-d.setDate(d.getDate()-1);
-let y=d.toISOString().split('T')[0];
-return date===y;
-}
-
 function togglePayment(id,current){
 firebase.database().ref("otp/"+id).update({
 payment:!current
+});
+}
+
+function toggleDelivered(id,current){
+firebase.database().ref("otp/"+id).update({
+delivered:!current
 });
 }
 
@@ -272,6 +268,7 @@ firebase.database().ref("otp/"+id).remove();
 }
 
 function editData(id,name,otp,amount){
+
 let newName=prompt("Edit Name",name);
 let newOTP=prompt("Edit OTP",otp);
 let newAmount=prompt("Edit Amount",amount);
@@ -281,15 +278,18 @@ name:newName,
 otp:newOTP,
 amount:newAmount
 });
+
 }
 
 function filterTable(){
+
 let value=document.getElementById("search").value.toLowerCase();
 let rows=document.querySelectorAll("#table tr");
 
 rows.forEach(row=>{
 row.style.display=row.innerText.toLowerCase().includes(value)?"":"none";
 });
+
 }
 
 function loadData(){
@@ -312,9 +312,6 @@ let html="";
 
 arr.forEach((d,index)=>{
 
-if(currentFilter==="today" && !isToday(d.date)) return;
-if(currentFilter==="yesterday" && !isYesterday(d.date)) return;
-
 totalOrders++;
 
 if(d.payment){
@@ -335,6 +332,10 @@ html+=`
 onclick="togglePayment('${d.id}',${d.payment})">
 </td>
 <td>₹ ${d.amount}</td>
+<td>
+<input type="checkbox" ${d.delivered?'checked':''}
+onclick="toggleDelivered('${d.id}',${d.delivered})">
+</td>
 <td>${d.time}</td>
 <td>
 <button class="editBtn" onclick="editData('${d.id}','${d.name}','${d.otp}','${d.amount}')">Edit</button>
