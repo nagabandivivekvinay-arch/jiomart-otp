@@ -48,13 +48,8 @@ cursor:pointer;
 margin:3px;
 }
 
-.deleteBtn{
-background:#ff4b2b;
-}
-
-.editBtn{
-background:#28a745;
-}
+.deleteBtn{background:#ff4b2b;}
+.editBtn{background:#28a745;}
 
 table{
 width:95%;
@@ -76,13 +71,8 @@ padding:8px;
 border-bottom:1px solid #ddd;
 }
 
-.pendingRow{
-background:#ffe5e5;
-}
-
-.latest{
-background:#fff9c4;
-}
+.pendingRow{background:#ffe5e5;}
+.latest{background:#fff9c4;}
 
 .summary{
 background:white;
@@ -90,19 +80,14 @@ color:black;
 padding:12px;
 margin-top:15px;
 border-radius:8px;
-width:320px;
+width:340px;
 margin-left:auto;
 margin-right:auto;
 font-weight:bold;
 }
 
-.hidden{
-display:none;
-}
-
-.filterButtons{
-margin-top:10px;
-}
+.hidden{display:none;}
+.filterButtons{margin-top:10px;}
 
 </style>
 
@@ -159,14 +144,13 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3); autoSubmit();">
 
 <div class="summary">
 Total Orders: <span id="totalOrders">0</span><br>
-Total Paid: ₹ <span id="totalPaid">0</span><br>
-Total Pending: ₹ <span id="totalPending">0</span>
+Total Delivered Amount: ₹ <span id="totalDelivered">0</span><br>
+Total Undelivered Amount: ₹ <span id="totalUndelivered">0</span>
 </div>
 
 <script>
 
 const ADMIN_PASSWORD="1122";
-
 let currentFilter="all";
 
 const firebaseConfig={
@@ -180,7 +164,6 @@ appId:"1:673199354644:web:572645d6b479d239b90801"
 };
 
 firebase.initializeApp(firebaseConfig);
-
 const db=firebase.database().ref("otp");
 
 let isAdmin=false;
@@ -299,8 +282,8 @@ db.orderByChild("timestamp").once("value",function(snapshot){
 let data=snapshot.val();
 let arr=[];
 let totalOrders=0;
-let totalPaid=0;
-let totalPending=0;
+let deliveredTotal=0;
+let undeliveredTotal=0;
 
 for(let id in data){
 arr.push({id:id,...data[id]});
@@ -312,15 +295,27 @@ let html="";
 
 arr.forEach((d,index)=>{
 
-totalOrders++;
-
-if(d.payment){
-totalPaid+=Number(d.amount);
-}else{
-totalPending+=Number(d.amount);
+if(currentFilter==="today"){
+let today=new Date().toISOString().split('T')[0];
+if(d.date!==today) return;
 }
 
-let rowClass=d.payment?"":"pendingRow";
+if(currentFilter==="yesterday"){
+let d1=new Date();
+d1.setDate(d1.getDate()-1);
+let y=d1.toISOString().split('T')[0];
+if(d.date!==y) return;
+}
+
+totalOrders++;
+
+if(d.delivered){
+deliveredTotal+=Number(d.amount);
+}else{
+undeliveredTotal+=Number(d.amount);
+}
+
+let rowClass=d.delivered?"":"pendingRow";
 if(index===0) rowClass+=" latest";
 
 html+=`
@@ -349,8 +344,8 @@ onclick="toggleDelivered('${d.id}',${d.delivered})">
 document.getElementById("table").innerHTML=html;
 
 document.getElementById("totalOrders").innerText=totalOrders;
-document.getElementById("totalPaid").innerText=totalPaid;
-document.getElementById("totalPending").innerText=totalPending;
+document.getElementById("totalDelivered").innerText=deliveredTotal;
+document.getElementById("totalUndelivered").innerText=undeliveredTotal;
 
 });
 
