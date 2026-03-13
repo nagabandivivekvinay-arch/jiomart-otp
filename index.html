@@ -144,8 +144,8 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3); autoSubmit();">
 
 <div class="summary">
 Total Orders: <span id="totalOrders">0</span><br>
-Total Delivered Amount: ₹ <span id="totalDelivered">0</span><br>
-Total Undelivered Amount: ₹ <span id="totalUndelivered">0</span>
+Total Paid: ₹ <span id="totalPaid">0</span><br>
+Total Pending: ₹ <span id="totalPending">0</span>
 </div>
 
 <script>
@@ -297,8 +297,8 @@ db.orderByChild("timestamp").once("value",function(snapshot){
 let data=snapshot.val();
 let arr=[];
 let totalOrders=0;
-let deliveredTotal=0;
-let undeliveredTotal=0;
+let totalPaid=0;
+let totalPending=0;
 
 for(let id in data){
 arr.push({id:id,...data[id]});
@@ -324,13 +324,13 @@ if(d.date!==y) return;
 
 totalOrders++;
 
-if(d.delivered){
-deliveredTotal+=Number(d.amount);
+if(d.payment){
+totalPaid+=Number(d.amount);
 }else{
-undeliveredTotal+=Number(d.amount);
+totalPending+=Number(d.amount);
 }
 
-let rowClass=d.delivered?"":"pendingRow";
+let rowClass=d.payment?"":"pendingRow";
 if(index===0) rowClass+=" latest";
 
 html+=`
@@ -361,8 +361,8 @@ ${isAdmin?`
 document.getElementById("table").innerHTML=html;
 
 document.getElementById("totalOrders").innerText=totalOrders;
-document.getElementById("totalDelivered").innerText=deliveredTotal;
-document.getElementById("totalUndelivered").innerText=undeliveredTotal;
+document.getElementById("totalPaid").innerText=totalPaid;
+document.getElementById("totalPending").innerText=totalPending;
 
 });
 
