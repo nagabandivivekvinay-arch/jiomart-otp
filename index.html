@@ -134,7 +134,7 @@ oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,3); autoSubmit();">
 <th>Amount</th>
 <th>Delivered</th>
 <th>Time</th>
-<th id="actionHead" class="hidden">Action</th>
+<th>Action</th>
 </tr>
 </thead>
 
@@ -175,11 +175,10 @@ let pass=document.getElementById("adminPass").value;
 if(pass===ADMIN_PASSWORD){
 
 isAdmin=true;
-
 document.getElementById("adminPanel").classList.remove("hidden");
-document.getElementById("actionHead").classList.remove("hidden");
-
 alert("Admin Mode Enabled");
+
+loadData();
 
 }else{
 
@@ -201,6 +200,8 @@ addOTP();
 }
 
 function addOTP(){
+
+if(!isAdmin) return;
 
 let name=document.getElementById("name").value;
 let otp=document.getElementById("otp").value;
@@ -233,24 +234,38 @@ loadData();
 }
 
 function togglePayment(id,current){
+
+if(!isAdmin) return;
+
 firebase.database().ref("otp/"+id).update({
 payment:!current
 });
+
 }
 
 function toggleDelivered(id,current){
+
+if(!isAdmin) return;
+
 firebase.database().ref("otp/"+id).update({
 delivered:!current
 });
+
 }
 
 function deleteData(id){
+
+if(!isAdmin) return;
+
 if(confirm("Delete this order?")){
 firebase.database().ref("otp/"+id).remove();
 }
+
 }
 
 function editData(id,name,otp,amount){
+
+if(!isAdmin) return;
 
 let newName=prompt("Edit Name",name);
 let newOTP=prompt("Edit OTP",otp);
@@ -323,18 +338,20 @@ html+=`
 <td>${d.name}</td>
 <td>${d.otp}</td>
 <td>
-<input type="checkbox" ${d.payment?'checked':''}
+<input type="checkbox" ${d.payment?'checked':''} ${!isAdmin?'disabled':''}
 onclick="togglePayment('${d.id}',${d.payment})">
 </td>
 <td>₹ ${d.amount}</td>
 <td>
-<input type="checkbox" ${d.delivered?'checked':''}
+<input type="checkbox" ${d.delivered?'checked':''} ${!isAdmin?'disabled':''}
 onclick="toggleDelivered('${d.id}',${d.delivered})">
 </td>
 <td>${d.time}</td>
 <td>
+${isAdmin?`
 <button class="editBtn" onclick="editData('${d.id}','${d.name}','${d.otp}','${d.amount}')">Edit</button>
 <button class="deleteBtn" onclick="deleteData('${d.id}')">Delete</button>
+`:'-'}
 </td>
 </tr>
 `;
