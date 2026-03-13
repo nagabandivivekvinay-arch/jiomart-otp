@@ -324,13 +324,13 @@ if(d.date!==y) return;
 
 totalOrders++;
 
-if(d.payment){
-totalPaid+=Number(d.amount);
+if(d.delivered){
+totalPaid += Number(d.amount);
 }else{
-totalPending+=Number(d.amount);
+totalPending += Number(d.amount);
 }
 
-let rowClass=d.payment?"":"pendingRow";
+let rowClass=d.delivered?"":"pendingRow";
 if(index===0) rowClass+=" latest";
 
 html+=`
